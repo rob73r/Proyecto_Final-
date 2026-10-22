@@ -1,67 +1,93 @@
-# Examen Final Integrador — API de Catálogo de Productos
+# FrescoAlerta
 
-API REST hecha con Node.js, Express y MongoDB Atlas (Mongoose).
+API REST para reducir el desperdicio de alimentos en casa mediante el control de inventario y fechas de vencimiento. Proyecto integrador de backend con Node.js, Express y MongoDB Atlas.
 
-## Cómo correrlo
+## Funcionalidades
 
-1. `npm install`
-2. Copia `.env.example` a `.env` y coloca tu cadena de conexión de MongoDB Atlas en `MONGO_URI`.
-3. `npm run dev` (o `npm start`)
-4. El servidor queda en `http://localhost:3000`
+- Registrar alimentos con nombre, cantidad, categoría y fecha de vencimiento.
+- Listar los alimentos ordenados por fecha de vencimiento, con un resumen (total, vencidos y por vencer en 7 días).
+- Filtrar por categoría y por días para vencer.
+- Editar y eliminar alimentos.
+- Sugerir recetas para aprovechar un alimento (API externa).
 
-## Estructura del proyecto
+## Tecnologías
 
-Usa ES Modules (`import`/`export`), habilitado con `"type": "module"` en `package.json`.
+Node.js (ES Modules), Express, MongoDB Atlas con Mongoose, express-validator, dotenv y nodemon.
 
+## Instalación
+
+1. Instalar dependencias:
 ```
-.
-├── app.js                 # Punto de entrada: carga .env y levanta el servidor
-├── src/
-│   ├── server/server.js   # Configura Express (middlewares y rutas), conecta la BD
-│   ├── config/db.js       # Conexión a MongoDB Atlas
-│   ├── controllers/       # Maneja req/res, delega al service
-│   ├── routers/           # Define los endpoints
-│   ├── services/          # Lógica de negocio + acceso a BD (Mongoose)
-│   ├── models/            # Esquema de Mongoose (Product)
-│   ├── middlewares/       # Middleware propio (logger y manejo de errores)
-│   └── validators/        # Reglas de express-validator
-└── .env                   # Variables de entorno (no se sube a git)
+   npm install
+```
+2. Copiar `.env.example` como `.env` y completar `MONGO_URI` con la conexión a MongoDB Atlas.
+3. Cargar alimentos de ejemplo (opcional):
+```
+   node src/seed.js
+```
+4. Iniciar el servidor:
+```
+   npm run dev
 ```
 
-**Nota técnica:** `app.js` empieza con `import 'dotenv/config';` (no `import dotenv from 'dotenv'; dotenv.config();` después). Esto es a propósito: en ES Modules, todos los `import` de un archivo se resuelven **antes** de que corra el resto del código, en el orden en que aparecen. Si `dotenv.config()` se llamara después de importar `server.js`, `server.js` ya habría intentado leer `process.env.MONGO_URI` sin que existiera todavía.
+El servidor queda disponible en `http://localhost:3000`. El archivo `pruebas.http` contiene peticiones de ejemplo para la extensión REST Client de VS Code.
 
 ## Rutas
 
-| # | Método | Ruta                          | Descripción                                              | Origen           |
-|---|--------|-------------------------------|-----------------------------------------------------------|-------------------|
-| 1 | POST   | /api/products                 | Crea un producto                                          | Base de datos     |
-| 2 | GET    | /api/products                 | Lista productos (filtro opcional `?category=`)             | Base de datos     |
-| 3 | GET    | /api/products/:id             | Obtiene un producto por id                                 | Base de datos     |
-| 4 | PUT    | /api/products/:id             | Actualiza un producto                                      | Base de datos     |
-| 5 | GET    | /api/products/:id/country     | Info del país de origen del producto (`countryCode`)        | API externa       |
+| # | Método | Ruta | Descripción | Origen |
+|---|---|---|---|---|
+| 1 | POST | `/api/alimentos` | Registra un alimento | Base de datos |
+| 2 | GET | `/api/alimentos` | Lista los alimentos con resumen. Filtros: `?categoria=lacteos` y `?porVencer=7` | Base de datos |
+| 3 | PUT | `/api/alimentos/:id` | Edita un alimento | Base de datos |
+| 4 | DELETE | `/api/alimentos/:id` | Elimina un alimento | Base de datos |
+| 5 | GET | `/api/alimentos/:id/recetas` | Sugiere recetas para aprovechar el alimento | API externa |
 
-La ruta 5 consume **REST Countries** (`https://restcountries.com`), que es pública y **no requiere API key**.
-
-## Ejemplo de body para crear un producto
+Ejemplo de registro:
 
 ```json
 {
-  "name": "Café orgánico",
-  "description": "Café de altura tostado artesanalmente",
-  "price": 25.5,
-  "stock": 100,
-  "category": "alimentos",
-  "countryCode": "PE"
+  "nombre": "Leche entera",
+  "cantidad": 2,
+  "categoria": "lacteos",
+  "fechaVencimiento": "2026-11-20"
 }
 ```
 
-## Checklist de consignas cubiertas
+### Días restantes
 
-- [x] Base de datos propia en MongoDB Atlas (Mongoose)
-- [x] Servidor Node con rutas y métodos HTTP (GET, POST, PUT)
-- [x] Esquema propio y original (`Product`)
-- [x] Validación con `express-validator` (`validators/productValidator.js`)
-- [x] Middleware propio (`requestLogger.js` y `errorHandler.js`)
-- [x] Ruta que consulta una API externa (`GET /api/products/:id/country`)
+Solo se guarda la fecha de vencimiento. Los campos `diasRestantes` y `estado` (`vencido`, `por vencer` o `fresco`) se calculan en cada consulta, por lo que se actualizan solos todos los días. Un valor negativo indica que el alimento ya venció.
 
-Recuerda: inscribirte al DEFI con el formulario antes de la entrega (02-03-2026).
+## API externa
+
+La ruta 5 consulta [TheMealDB](https://www.themealdb.com), una API pública de recetas. Cada alimento se relaciona con un ingrediente en inglés (por ejemplo, pollo con `chicken`), por lo que las recetas se devuelven en inglés.
+
+## Validaciones y middlewares
+
+- `express-validator` valida campos obligatorios, formato de fecha (`AAAA-MM-DD`), filtros numéricos e id de MongoDB.
+- `requestLogger`: middleware propio que registra método, ruta, código de estado y tiempo de respuesta.
+- `errorHandler`: middleware propio que centraliza las respuestas de error.
+
+## Estructura
+
+```
+.
+├── app.js                  # Punto de entrada
+├── pruebas.http            # Peticiones de prueba
+└── src/
+    ├── seed.js             # Alimentos de ejemplo
+    ├── server/server.js    # Configuración de Express
+    ├── config/db.js        # Conexión a MongoDB Atlas
+    ├── routers/            # Rutas
+    ├── controllers/        # Petición y respuesta
+    ├── services/           # Lógica y acceso a datos
+    ├── models/             # Esquema de Mongoose
+    ├── middlewares/        # Middlewares propios
+    └── validators/         # Validaciones
+```
+
+## Posibles mejoras
+
+- Usuarios, para que cada persona tenga su propio inventario.
+- Avisos cuando un alimento esté por vencer.
+- Interfaz web o móvil.
+- Recetas traducidas al español.
