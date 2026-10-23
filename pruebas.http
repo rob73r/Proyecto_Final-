@@ -1,72 +1,57 @@
-### 1. Listar todos los alimentos con resumen (GET)
-GET http://localhost:3000/api/alimentos
+# Pruebas de la API FrescoAlerta
 
-### Filtrar por categoría (GET)
-GET http://localhost:3000/api/alimentos?categoria=lacteos
+@baseUrl = http://localhost:3000/api/alimentos
 
-### Próximos a vencer en 7 días (GET)
-GET http://localhost:3000/api/alimentos?porVencer=7
 
-### 2. Registrar un alimento (POST)
-POST http://localhost:3000/api/alimentos
+### RUTA 2 - Listar los alimentos 
+# Devuelve la lista ordenada por vencimiento 
+GET {{baseUrl}}
+
+### Filtrar por categoría
+GET {{baseUrl}}?categoria=lacteos
+
+### Filtrar los que vencen en los próximos 7 días
+GET {{baseUrl}}?porVencer=7
+
+
+### RUTA 1 - Registrar un alimento 
+
+POST {{baseUrl}}
 Content-Type: application/json
 
 {
-  "nombre": "Ricota",
+  "nombre": "Pollo asado",
   "cantidad": 1,
-  "categoria": "lacteos",
-  "fechaVencimiento": "2026-11-05"
+  "categoria": "carnes",
+  "fechaVencimiento": "2027-01-15"
 }
 
-### Validación: body vacío (debe dar 400)
-POST http://localhost:3000/api/alimentos
+### Validación
+POST {{baseUrl}}
 Content-Type: application/json
 
 {}
 
-### 3. Editar la cantidad (PUT)
-PUT http://localhost:3000/api/alimentos/6ad9074ca5302d50a33045de
+
+### RUTA 3 - Editar un alimento 
+# Usa el id del alimento que se registró arriba.
+PUT {{baseUrl}}/{{registrar.response.body.$.data._id}}
 Content-Type: application/json
 
 {
-  "cantidad": 3
+  "cantidad": 2
 }
 
-### 5. API externa: recetas para aprovechar el pollo (GET)
-GET http://localhost:3000/api/alimentos/6ad844176b7264e443b84bb6/recetas
 
-### Recetas: leche
-GET http://localhost:3000/api/alimentos/6ad844176b7264e443b84baf/recetas
+### RUTA 5 - API externa: recetas para aprovechar el alimento 
+GET {{baseUrl}}/{{registrar.response.body.$.data._id}}/recetas
 
-### Recetas: huevos
-GET http://localhost:3000/api/alimentos/6ad844176b7264e443b84bb0/recetas
 
-### Recetas: queso cremoso
-GET http://localhost:3000/api/alimentos/6ad844176b7264e443b84bb1/recetas
+### RUTA 4 - Eliminar un alimento 
+DELETE {{baseUrl}}/{{registrar.response.body.$.data._id}}
 
-### Recetas: manteca
-GET http://localhost:3000/api/alimentos/6ad844176b7264e443b84bb2/recetas
+### Eliminar de nuevo 
+DELETE {{baseUrl}}/{{registrar.response.body.$.data._id}}
 
-### Recetas: yogur
-GET http://localhost:3000/api/alimentos/6ad844176b7264e443b84bb3/recetas
-
-### Recetas: dulce de leche
-GET http://localhost:3000/api/alimentos/6ad844176b7264e443b84bb4/recetas
-
-### Recetas: jamón cocido
-GET http://localhost:3000/api/alimentos/6ad844176b7264e443b84bb5/recetas
-
-### Recetas: carne picada
-GET http://localhost:3000/api/alimentos/6ad844176b7264e443b84bb7/recetas
-
-### Recetas: lechuga
-GET http://localhost:3000/api/alimentos/6ad844176b7264e443b84bb8/recetas
-
-### 4. Eliminar un alimento (DELETE)
-DELETE http://localhost:3000/api/alimentos/6ad9074ca5302d50a33045de
-
-### Eliminar un id inexistente (debe dar 404)
-DELETE http://localhost:3000/api/alimentos/6ad9074ca5302d50a33045de
-
-### Id con formato inválido (debe dar 400)
-DELETE http://localhost:3000/api/alimentos/123
+### Id con formato inválido 
+DELETE {{baseUrl}}/123
