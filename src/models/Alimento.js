@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 
-// Esquema de Alimento: solo se almacena la fecha de vencimiento.
+// Esquema de Alimento: define qué datos guardamos de cada alimento.
+// De las fechas solo guardamos la de vencimiento.
 const alimentoSchema = new mongoose.Schema(
   {
     nombre: {
@@ -13,6 +14,7 @@ const alimentoSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
+    // lowercase guarda la categoría en minúscula para que el filtro no falle por una mayúscula
     categoria: {
       type: String,
       required: true,
@@ -23,18 +25,19 @@ const alimentoSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
-   
   },
   {
+    // timestamps agrega solos los campos createdAt y updatedAt
     timestamps: true,
     id: false,
+    // Para que los campos virtuales aparezcan en las respuestas JSON
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
   }
 );
 
-// Días restantes hasta el vencimiento. Se calcula en cada consulta.
-// Un valor negativo indica que el alimento ya venció.
+// Campo virtual: se calcula cada vez que consultamos y no se guarda en la base.
+// Son los días que faltan para vencer (si da negativo, ya venció).
 alimentoSchema.virtual('diasRestantes').get(function () {
   const ahora = new Date();
   const hoy = Date.UTC(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
@@ -42,7 +45,7 @@ alimentoSchema.virtual('diasRestantes').get(function () {
   return Math.round((this.fechaVencimiento.getTime() - hoy) / msPorDia);
 });
 
-// Estado según los días restantes: vencido, por vencer (7 días o menos) o fresco.
+// Campo virtual: dice si está vencido, por vencer (7 días o menos) o fresco.
 alimentoSchema.virtual('estado').get(function () {
   const dias = this.diasRestantes;
   if (dias < 0) return 'vencido';
