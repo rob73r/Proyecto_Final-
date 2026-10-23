@@ -55,3 +55,5 @@ DELETE {{baseUrl}}/{{registrar.response.body.$.data._id}}
 
 ### Id con formato inválido 
 DELETE {{baseUrl}}/123
+### Borrar la Ricota que quedó de las pruebas
+DELETE {{baseUrl}}/6adae39d0cea2456893d857e
