@@ -3,8 +3,8 @@
 @baseUrl = http://localhost:3000/api/alimentos
 
 
-### RUTA 2 - Listar los alimentos 
-# Devuelve la lista ordenada por vencimiento 
+#Listar los alimentos 
+# Te trae la lista ordenada por fecha de vencimiento 
 GET {{baseUrl}}
 
 ### Filtrar por categoría
@@ -14,7 +14,7 @@ GET {{baseUrl}}?categoria=lacteos
 GET {{baseUrl}}?porVencer=7
 
 
-### RUTA 1 - Registrar un alimento 
+#Registrar un alimento 
 
 POST {{baseUrl}}
 Content-Type: application/json
@@ -26,15 +26,14 @@ Content-Type: application/json
   "fechaVencimiento": "2027-01-15"
 }
 
-### Validación
+#Prueba de Validación
 POST {{baseUrl}}
 Content-Type: application/json
 
 {}
 
 
-### RUTA 3 - Editar un alimento 
-# Usa el id del alimento que se registró arriba.
+#Editar un alimento 
 PUT {{baseUrl}}/{{registrar.response.body.$.data._id}}
 Content-Type: application/json
 
@@ -43,17 +42,17 @@ Content-Type: application/json
 }
 
 
-### RUTA 5 - API externa: recetas para aprovechar el alimento 
+#Buscar recetas en la API externa según el alimento
 GET {{baseUrl}}/{{registrar.response.body.$.data._id}}/recetas
 
 
-### RUTA 4 - Eliminar un alimento 
+#Eliminar el alimento creado en las pruebas 
 DELETE {{baseUrl}}/{{registrar.response.body.$.data._id}}
 
-### Eliminar de nuevo 
+#Intentar borrarlo de nuevo 
 DELETE {{baseUrl}}/{{registrar.response.body.$.data._id}}
 
-### Id con formato inválido 
+#Probar con un ID con formato inválido
 DELETE {{baseUrl}}/123
-### Borrar la Ricota que quedó de las pruebas
+#Borrar un ítem específico que quedó volando por ahí
 DELETE {{baseUrl}}/6adae39d0cea2456893d857e
