@@ -1,48 +1,53 @@
 # FrescoAlerta
 
-API REST para reducir el desperdicio de alimentos en casa mediante el control de inventario y fechas de vencimiento. Proyecto integrador de backend con Node.js, Express y MongoDB Atlas.
+API para llevar el control de la comida que hay en casa y no dejar que las cosas se pudran o se congele la heladera por gusto.
 
-## Funcionalidades
+Es una API REST hecha para un proyecto de backend usando **Node.js**, **Express** y **MongoDB Atlas**.
 
-- Registrar alimentos con nombre, cantidad, categoría y fecha de vencimiento.
-- Listar los alimentos ordenados por fecha de vencimiento, con un resumen (total, vencidos y por vencer en 7 días).
-- Filtrar por categoría y por días para vencer.
-- Editar y eliminar alimentos.
-- Sugerir recetas para aprovechar un alimento (API externa).
+---
 
-## Tecnologías
+## ¿Para qué sirve?
 
-Node.js (ES Modules), Express, MongoDB Atlas con Mongoose, express-validator, dotenv y nodemon.
+* **Guardar tu comida:** Registra, edita o borra lo que tienes guardado (nombre, cantidad, tipo de alimento y la fecha de vencimiento).
+* **Ver qué tienes a la mano:** Te trae la lista completa junto con un conteo rápido: cuántas cosas hay en total, cuántas ya vencieron y cuáles están a punto de vencerse en los próximos 7 días.
+* **Filtrar sin enredos:** Puedes buscar directamente por categoría (como `?categoria=lacteos`) o filtrar lo que se vence pronto (`?porVencer=7`).
+* **Ideas de cocina:** Si no sabes qué hacer con un ingrediente, la API consulta una base de datos externa y te tira sugerencias de recetas.
 
-## Instalación
+---
 
-1. Instalar dependencias:
-```
-   npm install
-```
-2. Copiar `.env.example` como `.env` y completar `MONGO_URI` con la conexión a MongoDB Atlas.
-3. Cargar alimentos de ejemplo (opcional):
-```
-   node src/seed.js
-```
-4. Iniciar el servidor:
-```
-   npm run dev
-```
+## ¿Cómo calcula los días de vencimiento?
 
-El servidor queda disponible en `http://localhost:3000`. El archivo `pruebas.http` contiene peticiones de ejemplo para la extensión REST Client de VS Code.
+Para no complicar las cosas ni guardar datos obsoletos en la base de datos, **no guardamos los días restantes**. 
 
-## Rutas
+Los días que le quedan a cada alimento y su estado (`fresco`, `por vencer` o `vencido`) se calculan al momento de hacer la consulta. Si el número de días sale negativo, ya sabes que eso venció.
 
-| # | Método | Ruta | Descripción | Origen |
-|---|---|---|---|---|
-| 1 | POST | `/api/alimentos` | Registra un alimento | Base de datos |
-| 2 | GET | `/api/alimentos` | Lista los alimentos con resumen. Filtros: `?categoria=lacteos` y `?porVencer=7` | Base de datos |
-| 3 | PUT | `/api/alimentos/:id` | Edita un alimento | Base de datos |
-| 4 | DELETE | `/api/alimentos/:id` | Elimina un alimento | Base de datos |
-| 5 | GET | `/api/alimentos/:id/recetas` | Sugiere recetas para aprovechar el alimento | API externa |
+---
 
-Ejemplo de registro:
+## La API de recetas (TheMealDB)
+
+Para las recetas usamos la API pública de **TheMealDB**. Como esa plataforma funciona en inglés, cruzamos el ingrediente con su nombre en inglés (por ejemplo, *pollo* pasa como *chicken*). Por eso las recetas que devuelve la API vienen en inglés.
+
+---
+
+## Atajos y validaciones
+
+* **`express-validator`:** Se encarga de revisar que no mandes campos vacíos, que las fechas tengan formato de verdad (`AAAA-MM-DD`) y que los IDs sean válidos.
+* **`requestLogger`:** Un middleware propio para ver en la consola qué ruta se consultó, qué estado devolvió y cuánto tardó.
+* **`errorHandler`:** Captura cualquier error feo en el código para devolver una respuesta limpia.
+
+---
+
+## Rutas principales
+
+| Método | Ruta | Qué hace |
+| :--- | :--- | :--- |
+| `POST` | `/api/alimentos` | Guarda un nuevo alimento. |
+| `GET` | `/api/alimentos` | Trae todo lo guardado con el resumen. Acepta filtros como `?categoria=lacteos`. |
+| `PUT` | `/api/alimentos/:id` | Edita la info de un alimento. |
+| `DELETE` | `/api/alimentos/:id` | Borra un alimento de la lista. |
+| `GET` | `/api/alimentos/:id/recetas` | Te busca recetas según el alimento. |
+
+### Ejemplo de cómo enviar un alimento (`POST /api/alimentos`):
 
 ```json
 {
@@ -51,43 +56,17 @@ Ejemplo de registro:
   "categoria": "lacteos",
   "fechaVencimiento": "2026-11-20"
 }
-```
 
-### Días restantes
-
-Solo se guarda la fecha de vencimiento. Los campos `diasRestantes` y `estado` (`vencido`, `por vencer` o `fresco`) se calculan en cada consulta, por lo que se actualizan solos todos los días. Un valor negativo indica que el alimento ya venció.
-
-## API externa
-
-La ruta 5 consulta [TheMealDB](https://www.themealdb.com), una API pública de recetas. Cada alimento se relaciona con un ingrediente en inglés (por ejemplo, pollo con `chicken`), por lo que las recetas se devuelven en inglés.
-
-## Validaciones y middlewares
-
-- `express-validator` valida campos obligatorios, formato de fecha (`AAAA-MM-DD`), filtros numéricos e id de MongoDB.
-- `requestLogger`: middleware propio que registra método, ruta, código de estado y tiempo de respuesta.
-- `errorHandler`: middleware propio que centraliza las respuestas de error.
-
-## Estructura
-
-```
 .
-├── app.js                  # Punto de entrada
-├── pruebas.http            # Peticiones de prueba
+├── app.js                  # Lo que arranca todo
+├── pruebas.http            # Archivo con pruebas rápidas para VS Code
 └── src/
-    ├── seed.js             # Alimentos de ejemplo
-    ├── server/server.js    # Configuración de Express
-    ├── config/db.js        # Conexión a MongoDB Atlas
-    ├── routers/            # Rutas
-    ├── controllers/        # Petición y respuesta
-    ├── services/           # Lógica y acceso a datos
-    ├── models/             # Esquema de Mongoose
-    ├── middlewares/        # Middlewares propios
-    └── validators/         # Validaciones
-```
-
-## Posibles mejoras
-
-- Usuarios, para que cada persona tenga su propio inventario.
-- Avisos cuando un alimento esté por vencer.
-- Interfaz web o móvil.
-- Recetas traducidas al español.
+    ├── seed.js             # Datos de prueba para llenar la BD
+    ├── server/             # Configuración de Express
+    ├── config/             # Conexión con Mongo Atlas
+    ├── routers/            # Las rutas de la API
+    ├── controllers/        # Controladores (los que reciben y responden)
+    ├── services/           # La lógica pesada del sistema
+    ├── models/             # El modelo de datos (Mongoose)
+    ├── middlewares/        # Módulos para logs y errores
+    └── validators/         # Las reglas de validación
